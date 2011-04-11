@@ -55,10 +55,11 @@ GameClient::GameClient(class Portal &services)
   _wm = services.requestInterface<WindowManager>();
 
   if (Env("SKIP_UPDATE") != "true") {
-    Log(INFO) << "updating...";
+    Log(INFO) << "checking for updates...";
     SelfUpdater *updater = services.requestInterface<SelfUpdater>();
+
     updater->requestUpdate("tankage.exe", 
-                           "http://chikera-makera.id.lv/drop-box/tankage/tankage.exe");
+                           "http://iostream.cc/~peter/binaries/win/tankage.exe");
   }
   else {
     if (remove("_tankage.exe")) {
@@ -66,7 +67,7 @@ GameClient::GameClient(class Portal &services)
     }
     Log(INFO) << "skipping update";
   }
-   
+
   _last_update = _wm->timeSeconds();
   _input_time = 0.0;
   _since_snap = 0.0;
