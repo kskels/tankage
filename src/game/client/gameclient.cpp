@@ -12,6 +12,7 @@
 #include <platform/graphics.h>
 #include <platform/window_manager.h>
 #include <platform/self_updater.h>
+#include <platform/config.h>
 
 #include <utils/log.h>
 #include <utils/packer.h>
@@ -31,7 +32,6 @@ std::string Env(const std::string &name) {
 
 Variable<std::string> client_host("tankage.iostream.cc:12345");
 Variable<std::string> client_name("Master");
-
 Variable<bool> client_predict(true);
 Variable<bool> client_lerpRemote(true);
 Variable<bool> client_centerCam(true);
@@ -198,6 +198,8 @@ double GameClient::deltaTime() const {
   
   return _since_snap / (1.0 / _net_tickrate);
 }
+
+// 0.1.9
 
 double GameClient::sinceSnap() const {
   return _since_snap;
