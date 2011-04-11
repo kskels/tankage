@@ -18,6 +18,8 @@
 
 #include <cassert>
 #include <iostream>
+#include <windows.h>
+
 
 namespace {
 std::string Env(const std::string &name) {
@@ -26,11 +28,11 @@ std::string Env(const std::string &name) {
 }
 }
 
-Variable<std::string> client_host("iostream.cc:12345");
-Variable<std::string> client_name("Some guy");
+Variable<std::string> client_host("tankage.iostream.cc:12345");
+Variable<std::string> client_name("Master");
 Variable<bool> client_predict(true);
 Variable<bool> client_lerpRemote(true);
-Variable<bool> client_centerCam(false);
+Variable<bool> client_centerCam(true);
 
 void client_RegisterVariables(Config &config) {
   config.registerVariable("client", "host", &client_host);
@@ -55,14 +57,16 @@ GameClient::GameClient(class Portal &services)
   if (Env("SKIP_UPDATE") != "true") {
     Log(INFO) << "updating...";
     SelfUpdater *updater = services.requestInterface<SelfUpdater>();
-    updater->requestUpdate("tankage", 
-                           "http://iostream.cc/~peter/binaries/tankage");
+    updater->requestUpdate("tankage.exe", 
+                           "http://chikera-makera.id.lv/drop-box/tankage/tankage.exe");
   }
   else {
+    if (remove("_tankage.exe")) {
+      Log(DEBUG) << "failed to delete file";
+    }
     Log(INFO) << "skipping update";
   }
-
-    
+   
   _last_update = _wm->timeSeconds();
   _input_time = 0.0;
   _since_snap = 0.0;

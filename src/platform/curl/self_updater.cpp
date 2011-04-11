@@ -3,18 +3,36 @@
 #include <utils/log.h>
 
 #include <sys/stat.h>
-#include <unistd.h>
 #include <cstdlib>
 #include <cstdio>
 #include <stdexcept>
 #include <cerrno>
+#include <fstream>
+
+// #include <unistd.h>
+
+#include <io.h>
+#include <process.h>
+#include <stdlib.h>
+#include <dos.h>
 
 namespace {
 int out_file;
+const char* out_filename;
 size_t bytes_rx;
   
 size_t WriteData(void *buffer, size_t size, size_t nmemb, void *userp) {
-  size_t written = write(out_file, buffer, nmemb * size);
+  // size_t written = write(out_file, buffer, nmemb * size);
+  // bytes_rx += written;
+  size_t written = nmemb * size;
+  std::ofstream file(out_filename, std::ios::app | std::ios::binary);
+  if (file.is_open()) {
+    file.write((char*)buffer, written);
+    file.close();
+  } else {
+    Log(DEBUG) << "failed to write the file";
+    written = 0;
+  }
   bytes_rx += written;
   return written;
 }
@@ -33,23 +51,29 @@ long FileLastModified(const std::string &filename) {
   
 void install(const std::string &filename,
              const std::string &dest) {
-  if (chmod(filename.c_str(), S_IRWXU) == -1) {
-    throw std::runtime_error("failed to set executable bit for '" + 
-                             filename + "':" + std::string(strerror(errno)));
+  // if (chmod(filename.c_str(), S_IRWXU) == -1) {
+  //   throw std::runtime_error("failed to set executable bit for '" + 
+  //                            filename + "':" + std::string(strerror(errno)));
+  // }
+
+  if (rename(dest.c_str(), (std::string("_") +  dest).c_str() ) == -1) {
+     throw std::runtime_error("failed to move file '" + 
+                              dest + "' to '" + dest + "_" + "':" 
+                              + std::string(strerror(errno)));
   }
-  
-  if (rename(filename.c_str(), dest.c_str()) == -1) {
-    throw std::runtime_error("failed to move file '" + 
-                             filename + "' to '" + dest + "':" 
-                             + std::string(strerror(errno)));
+
+  if (rename(filename.c_str(), dest.c_str() ) == -1) {
+     throw std::runtime_error("failed to move file '" + 
+                              filename + "' to '" + dest + "':" 
+                              + std::string(strerror(errno)));
   }
   
   
 }
   
 void restart(const std::string &file) {
-  setenv("SKIP_UPDATE", "true", 1);
-  
+  // setenv("SKIP_UPDATE", "true", 1);
+  putenv("SKIP_UPDATE=true");
   Log(DEBUG) << "restarting binary...";
   if (execl(file.c_str(), file.c_str(), (char *)0) == -1) {
     throw std::runtime_error("failed to restart binary using new version!");
@@ -71,11 +95,18 @@ void Curl::SelfUpdater::requestUpdate(const std::string &file,
   
   // create a temp file for download
   char tmp_filename[32];
-  strcpy(tmp_filename, "/tmp/temp.XXXXX");
-  out_file = mkstemp(tmp_filename);
+  // strcpy(tmp_filename, "/tmp/temp.XXXXX");
+  // out_file = mkstemp(tmp_filename);
+
+  const char* fn_template = "temp.XXXXXX";
+  strcpy(tmp_filename, fn_template);
+  if (_mktemp_s(tmp_filename, strlen(fn_template) + 1)) {
+    throw std::runtime_error("failed to create temporary filename..");
+  }
+  out_filename = tmp_filename;
   bytes_rx = 0;
-  Log(DEBUG) << "created temp file '" << tmp_filename << "'";
-  
+  Log(DEBUG) << "created temp file '" << out_filename << "'";
+
   // download it
   curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, WriteData);
   curl_easy_setopt(handle, CURLOPT_URL, url.c_str());
