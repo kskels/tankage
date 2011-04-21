@@ -24,11 +24,6 @@ IF(APPLE)
 ELSE(APPLE)
   SET(CPACK_GENERATOR "DEB")
   SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "Sillybat")
-  # Quick and dirty fix to create /usr/share/tankage/data folder otherwise
-  # package complains that folder doesn't exist 
-  set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA 
-	"${PROJECT_ROOT_DIR}/cmake/Scripts/preinst;${PROJECT_ROOT_DIR}/cmake/Scripts/postrm;"
-    )
 
   # Dependencies needed on Ubuntu 10.10 (probably version can be lowered)
   SET(CPACK_DEBIAN_PACKAGE_DEPENDS "libglfw2 (>= 2.6-2), libdevil1c2 (>= 1.7.8-6)")
