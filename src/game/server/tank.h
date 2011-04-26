@@ -6,12 +6,7 @@
 #include <utils/vec.h>
 #include <utils/algorithm.h>
 #include <vector>
-
-inline double wrap(double value, double lower, double upper) { // FIXME: util.
-  double distance = upper - lower;
-  double times = floor((value - lower) / distance);
-  return value - (times * distance);
-}
+#include <map>
 
 class Tank : public Entity {
 public:
@@ -33,7 +28,9 @@ public:
     void integrate(const Control::Input &input, double dt);
   };
   /* <--- end shared state code ---> */
-  
+
+  typedef std::map<char, char> Inventory;
+
   
   Tank(class GameServer *gameserver, class b2Body *body);
   
@@ -42,11 +39,13 @@ public:
   void postTick();
   void recvInput(const Control::Input &input);
   void takeDamage(const vec2 &at, int amount);
+  void takeItem(char type, int amount);
   vec2 position() const {return _state.pos; }
   
   const State &state() const;
   void assign(const State &state);
   int id() const {return _state.id; }
+  const Inventory &inventory() const {return _inventory; }
   
 private:
   void shoot();
@@ -57,6 +56,7 @@ private:
   class GameServer *_gameserver;
   class b2Body *_body;
   State _state;
+  Inventory _inventory;
   std::vector<Control::Input> _lastinput;
 };
 

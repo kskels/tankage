@@ -58,7 +58,7 @@ void Tank::State::integrate(const Control::Input &input, double dt) {
   lin_vel *= clamp(mag, 0.0, 100.0); // maximum speed
   
   // base rotation
-  double multiplier = length(lin_vel) / 100.0;
+  double multiplier = 0.05; //length(lin_vel) / 100.0;
   if (input.buttons & Control::Input::TURN_RIGHT) {
     rot_vel += dt * (300.0 - (clamp(300.0 * multiplier - 50.0, 0.0, 300.0)));
     lin_vel *= 0.95;
@@ -169,4 +169,14 @@ void Tank::takeDamage(const vec2 &at, int amount) {
   if (_health <= 0) {
     _gameserver->destroyEntity(id());
   }
+}
+
+void Tank::takeItem(char type, int amount) {
+  Log(DEBUG) << "tank " << id() << " got item #" << int(type) << " amount: " << amount;
+
+  Inventory::iterator iter = _inventory.find(type);
+  if (iter == _inventory.end())
+    _inventory.insert(Inventory::value_type(type, amount));
+  else
+    iter->second = clamp(iter->second + amount, 0, 100); // 100 is maximum amt
 }

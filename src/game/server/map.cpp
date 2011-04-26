@@ -37,13 +37,42 @@ bool Map::intersectSolid(const vec2 &start, const vec2 &end,
   return _page.intersectSolid(start, end, point, hit_tile);
 }
 
-void Map::damageTile(const TileCoord &tile) {
-  Log(DEBUG) << "removing " << tile.first << ", " << tile.second;
+void Map::damageTile(const TileCoord &tile, int amount) {
+  char tile_data = _page.tileAt(tile);
+  char tile_damage = (tile_data & 0xF0) >> 4;
+  char new_tile;
+  
+  if ((tile_data & 0x0F) == Page::TileWall) {
+    amount *= 2.0f;
+  }
+  
+  if (tile_damage == 0xF) {
+    Log(DEBUG) << "removing " << tile.first << ", " << tile.second;
+    new_tile = Page::TileGrass;
+    
+    if ((tile_data & 0x0F) == Page::TileKasparium) {
+      _gameserver->spawnResource(_page.tilePos(tile), 1);
+    }
+  }
+  else {
+    tile_damage = clamp(tile_damage + amount, 0, 0xF);
+    Log(DEBUG) << "damaging " << tile.first << ", " << tile.second 
+               << " (" << int(tile_damage) << ")";
+    
+    new_tile = (tile_damage << 4) | (tile_data & 0x0F);
+  }
 
-  _page.tileAt(tile) = 1;
-  _page.refresh(tile);
-  _gameserver->events().spawnTileUpdate(tile.first, tile.second, 1, 
+  _page.tileAt(tile) = new_tile;
+
+  if ((tile_data & 0x0F) != (new_tile & 0x0F)) 
+    _page.refresh(tile);
+  
+  _gameserver->events().spawnTileUpdate(tile.first, tile.second, new_tile, 
                                         vec2((tile.first - 16) * 32, 
-                                             (tile.second - 16) * 32));
+                                             (tile.second - 16) * 32));  
+}
+
+void Map::tick() {
+  _page.update(_gameserver->tickDuration(), _gameserver);
 }
 

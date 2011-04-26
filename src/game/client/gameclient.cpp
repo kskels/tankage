@@ -3,6 +3,7 @@
 #include <game/client/snapshot.h>
 #include <game/server/tank.h> // needed for tank::state
 #include <game/server/bullet.h>
+#include <game/server/resource.h>
 #include <game/common/net_protocol.h>
 #include <game/common/config.h>
 
@@ -48,8 +49,9 @@ GameClient::GameClient(class Portal &services)
   , _textrenderer(services, _texloader) // NOTE: can probably be done similar to below, ->textureLoader()..
   , _bulletrenderer(this, services)
   , _tankrenderer(this, services)
+  , _resrenderer(this, services)
   , _control(services)
-  , _map(services)
+  , _map(services, this)
 {
   _net = services.requestInterface<Network>();
   _gfx = services.requestInterface<Graphics>();
@@ -72,6 +74,7 @@ GameClient::GameClient(class Portal &services)
     Log(INFO) << "skipping update";
     
     #ifdef _WIN32
+    // FIXME: this should not be here. it should be in the SelfUpdate service.
     std::ifstream file("_tankage.exe", std::ifstream::in);
     if (file.is_open()) {
       file.close();
@@ -92,6 +95,7 @@ GameClient::GameClient(class Portal &services)
   _net_tickrate = 10.0; // default, but should be updated by server_info
   _view = vec2(0.0f, 0.0f);
   _local_player = -1;
+  _first_tick = -1;
   
   _state = GameClient::STATE_DISCONNECTED;
   Log(INFO) << "connecting to host " << *client_host << "...";
@@ -130,6 +134,7 @@ void GameClient::update() {
   const color4 desertColor(0.957f, 0.917f, 0.682f, 1.0f);
   _gfx->clear(desertColor);
   _map.render();
+  _resrenderer.render();
   _tankrenderer.render();
   _bulletrenderer.render();
   
@@ -233,6 +238,14 @@ double GameClient::tickDuration() const {
   return 1.0/_net_tickrate;
 }
 
+double GameClient::localTime() const {
+  return (snapTick() - _first_tick) * tickDuration() + sinceSnap();
+}
+
+int GameClient::snapTick() const {
+  return _snap_tick;
+}
+
 void GameClient::onReceive(Packet *packet) {
   static std::vector<unsigned char> buffer;  
   static int packetCount = 0;
@@ -251,8 +264,14 @@ void GameClient::onReceive(Packet *packet) {
     int snap_tick = msg.readInt();
     Log(DEBUG) << "rx snap " << snap_tick << ", since last: " << sinceSnap();
     
+    if (_first_tick < 0)
+      _first_tick = snap_tick;
+    
+    _snap_tick = snap_tick;
+    
     Snapshot<Tank::State> tanks_snapshot(snap_tick);
     Snapshot<Bullet::State> bullets_snapshot(snap_tick);
+    Snapshot<Resource::State> res_snapshot(snap_tick);
     
     while (short snaptype = msg.readShort()) {
       switch (snaptype) {
@@ -264,6 +283,10 @@ void GameClient::onReceive(Packet *packet) {
         bullets_snapshot.push(msg);
         break;
         
+      case 3:
+        res_snapshot.push(msg);
+        break;
+
       default:
         onEvent(snaptype, msg);
       }
@@ -271,6 +294,7 @@ void GameClient::onReceive(Packet *packet) {
     
     _tankrenderer.addSnapshot(tanks_snapshot);
     _bulletrenderer.addSnapshot(bullets_snapshot);
+    _resrenderer.addSnapshot(res_snapshot);
     _since_snap = 0.0;
   }
   else if (msgtype == NET_ERROR) {
@@ -328,6 +352,35 @@ void GameClient::onEvent(short event, class Unpacker &msg) {
     int y = msg.readShort();
     char state = msg.readByte();
     _map.setTile(std::make_pair(x, y), state);
+  }
+  else if (event == NET_ITEM_PICKUP) {
+    int entity = msg.readInt();
+    char item = msg.readByte();
+    char amount = msg.readByte();
+    Log(DEBUG) << "tank " << entity << " picked up " << 
+                  int(item) << " amount: " << int(amount);
+  }
+  else if (event == NET_INVENTORY_UPDATE) {
+    int entity = msg.readInt();
+    char items = msg.readByte();
+    
+    // We still have to eat the data, even if we're not the target..
+    if (entity == localPlayer()) {
+      Log(INFO) << int(items) << "# of items in tank inventory:";
+      Log(INFO) << "---------------------------------";
+    }
+    else {
+      Log(INFO) << "not local player";
+    }
+      
+    for (int i = 0; i < items; ++i) {
+      char type = msg.readByte();
+      char amount = msg.readByte();
+        
+      if (entity == localPlayer()) {
+        Log(INFO) << "type: " << int(type) << " amount: " << int(amount);
+      }
+    }
   }
 }
 

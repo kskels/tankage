@@ -23,6 +23,7 @@ private:
 
 class Unpacker {
 public:
+  // TODO: const char * + size_t instead of vector here
   Unpacker(const std::vector<unsigned char> &data);
   
   bool bad() const;
@@ -30,7 +31,7 @@ public:
   short readShort();
   int readInt();
   std::string readString();
-  std::pair<const unsigned char *, size_t> readData();
+  std::pair<const char *, size_t> readData();
 
 private:  
   bool verifySize(size_t size);
