@@ -4,6 +4,7 @@
 #include <game/client/tank_renderer.h>
 #include <game/client/text_renderer.h>
 #include <game/client/bullet_renderer.h>
+#include <game/client/resource_renderer.h>
 #include <game/client/map.h>
 #include <game/common/net_protocol.h>
 #include <game/common/control.h>
@@ -27,6 +28,8 @@ public:
   void start();
   void update();
   void disconnectGently();
+  double localTime() const;
+  int snapTick() const;
   double deltaTime() const;
   double sinceSnap() const;
   double tickDuration() const;
@@ -62,12 +65,15 @@ private:
   double _last_ping;
   vec2 _view;
   int _local_player;
+  int _first_tick;
+  int _snap_tick;
   
   Control::Input _sent_input;
   TextureLoader _texloader;
   TextRenderer _textrenderer;
   BulletRenderer _bulletrenderer;
   TankRenderer _tankrenderer;
+  ResourceRenderer _resrenderer;
   Control _control;
   ClientMap _map;
   
