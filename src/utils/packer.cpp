@@ -110,7 +110,7 @@ int Unpacker::readInt() {
 
 std::pair<const char *, size_t> Unpacker::readData() {
   unsigned short size = readShort();
-  std::pair<const char *, size_t> ret(0, 0);
+  std::pair<const char *, size_t> ret(reinterpret_cast<const char*>(0), 0);
   if (_badbit || !verifySize(size))
     return ret;
   
