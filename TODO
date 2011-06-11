@@ -98,5 +98,6 @@
 * Linux support
 ** TODO Add the icon for Linux as well 
 * Auto-update
-** TODO Write a proposal how-to implement extended-auto update
+** DONE Find some MD5 library for creating some HASH sums
+** TODO Implement a tool that reeds current directory and creates report
 
