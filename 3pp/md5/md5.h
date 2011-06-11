@@ -89,7 +89,7 @@ typedef struct
  *
  * md5_p - Pointer to md5 structure that we are initializing.
  */
-extern
+extern "C"
 void	md5_init(md5_t *md5_p);
 
 /*
@@ -115,7 +115,7 @@ void	md5_init(md5_t *md5_p);
  *
  * buf_len - The length of the buffer.
  */
-extern
+extern "C"
 void	md5_process(md5_t *md5_p, const void *buffer,
 		    const unsigned int buf_len);
 
@@ -138,7 +138,7 @@ void	md5_process(md5_t *md5_p, const void *buffer,
  *
  * signature - A 16 byte buffer that will contain the MD5 signature.
  */
-extern
+extern "C"
 void	md5_finish(md5_t *md5_p, void *signature);
 
 /*
@@ -162,7 +162,7 @@ void	md5_finish(md5_t *md5_p, void *signature);
  *
  * signature - A 16 byte buffer that will contain the MD5 signature.
  */
-extern
+extern "C"
 void	md5_buffer(const char *buffer, const unsigned int buf_len,
 		   void *signature);
 
@@ -187,7 +187,7 @@ void	md5_buffer(const char *buffer, const unsigned int buf_len,
  *
  * str_len - the length of the string.
  */
-extern
+extern "C"
 void	md5_sig_to_string(void *signature, char *str, const int str_len);
 
 /*
@@ -209,7 +209,7 @@ void	md5_sig_to_string(void *signature, char *str, const int str_len);
  * str - A string of charactes which _must_ be at least 32 bytes long (2
  * characters per MD5 byte).
  */
-extern
+extern "C"
 void	md5_sig_from_string(void *signature, const char *str);
 
 /*<<<<<<<<<<   This is end of the auto-generated output from fillproto. */

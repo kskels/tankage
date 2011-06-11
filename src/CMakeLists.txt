@@ -7,10 +7,7 @@
 add_subdirectory(utils)
 add_subdirectory(platform)
 add_subdirectory(game)
-
-if (DEFINED SERVER)
-add_subdirectory(tool)
-endif (DEFINED SERVER)
+add_subdirectory(tools)
 
 
 if (HAVE_BOOST)
